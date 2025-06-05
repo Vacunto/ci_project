@@ -1,24 +1,29 @@
-name: Run Tests
+name: Run Tests on Multiple Python Versions
 
 on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
+          pip install pytest black flake8
 
       - name: Run flake8
         run: |
@@ -29,7 +34,7 @@ jobs:
         run: |
           source venv/bin/activate
           pytest
-          
+
       - name: Telegram notification
         if: ${{ failure() }}
         uses: appleboy/telegram-action@master
@@ -41,4 +46,3 @@ jobs:
             Репозиторий: ${{ github.repository }}
             Ветка: ${{ github.ref }}
             Ссылка на запуск: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-    
